@@ -25,6 +25,16 @@ function corsHeaders() {
   };
 }
 
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function cachedJsonFetch(cacheKey, doFetch) {
   const cache = caches.default;
   let response = await cache.match(cacheKey);
@@ -76,14 +86,14 @@ async function handleAnilist(request) {
   const cacheKey = new Request(url.toString(), request);
 
   return cachedJsonFetch(cacheKey, () =>
-    fetch('https://graphql.anilist.co', {
+    fetchWithTimeout('https://graphql.anilist.co', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify({ query, variables }),
-    })
+    }, 8000)
   );
 }
 
@@ -94,7 +104,9 @@ async function handleJikan(request) {
 
   const cacheKey = new Request(url.toString(), request);
 
-  return cachedJsonFetch(cacheKey, () => fetch(jikanUrl, { headers: { Accept: 'application/json' } }));
+  return cachedJsonFetch(cacheKey, () =>
+    fetchWithTimeout(jikanUrl, { headers: { Accept: 'application/json' } }, 7000)
+  );
 }
 
 export default {
