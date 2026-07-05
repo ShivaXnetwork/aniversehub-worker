@@ -1,7 +1,0 @@
-name = "aniversehub-proxy"
-main = "index.js"
-compatibility_date = "2026-07-01"
-
-# Free tier: 100,000 requests/day — with the 6h edge cache, real traffic
-# to AniList/Jikan will be a tiny fraction of that. No KV/D1 needed since
-# this uses the built-in Workers Cache API (caches.default).
