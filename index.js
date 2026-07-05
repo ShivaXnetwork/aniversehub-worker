@@ -43,17 +43,24 @@ async function cachedJsonFetch(cacheKey, doFetch) {
   const originRes = await doFetch();
   const body = await originRes.text();
 
+  const isSuccess = originRes.status >= 200 && originRes.status < 300;
   response = new Response(body, {
     status: originRes.status,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': `public, max-age=${CACHE_TTL_SECONDS}`,
+      // Only tell the browser/edge to cache this if it's a real success —
+      // caching an error response (e.g. a transient 403/504) would make
+      // that error "sticky" in the visitor's own browser for the full
+      // TTL, showing up again even after the origin recovers or the IP
+      // changes (VPN, etc).
+      'Cache-Control': isSuccess ? `public, max-age=${CACHE_TTL_SECONDS}` : 'no-store',
       ...corsHeaders(),
     },
   });
 
-  // Only cache successful responses — don't lock in a transient 4xx/5xx.
-  if (originRes.status >= 200 && originRes.status < 300) {
+  // Only cache successful responses at the edge too — don't lock in a
+  // transient 4xx/5xx.
+  if (isSuccess) {
     await cache.put(cacheKey, response.clone());
   }
   return response;
