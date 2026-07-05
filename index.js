@@ -112,7 +112,7 @@ async function handleJikan(request) {
   const cacheKey = new Request(url.toString(), request);
 
   return cachedJsonFetch(cacheKey, () =>
-    fetchWithTimeout(jikanUrl, { headers: { Accept: 'application/json' } }, 7000)
+    fetchWithTimeout(jikanUrl, { headers: { Accept: 'application/json' } }, 12000)
   );
 }
 
